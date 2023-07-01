@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+  <style>
+    /* Form Styling */
+    body {
+      background-color: #F3A542;
+    }
+
+    .form-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+      background-color: #F3A542;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      /* Align items from the start */
+    }
+
+    .form-group label {
+      flex: 0 0 250px;
+      margin-right: 50px;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    .form-group input,
+    .form-group select {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+      width: 100%;
+    }
+    .equal-width {
+  width: 100%;
+}
+
+    .form-group .error-message {
+      color: #dc3545;
+      font-size: 14px;
+    }
+
+    .form-group .record-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 150px;
+      height: 50px;
+      border-radius: 4px;
+      background-color: #007bff;
+      color: #fff;
+      cursor: pointer;
+      border: none;
+    }
+
+    .form-group .record-button.recording {
+      background-color: #e53935;
+    }
+
+    .form-group .record-button i {
+      margin-right: 10px;
+    }
+
+    .form-group .audio-container {
+      display: flex;
+      align-items: center;
+    }
+
+    .form-group .audio-container audio {
+      margin-left: 10px;
+    }
+
+    .form-group .delete-audio {
+      color: #f44336;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+
+    .form-group .text-center {
+      text-align: center;
+    }
+
+    .form-group .btn-primary {
+      background-color: #007bff;
+      color: #fff;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      
+    }
+    .center-button {
+  display: block;
+  margin: 0 auto;
+}
+    /* Error Message Styling */
+    .error-message {
+      margin-top: 5px;
+    }
+
+    /* Inline Form Styling */
+    .inline-form {
+      display: flex;
+      align-items: center;
+    }
+  </style>
+  <title>Student Voice Recording</title>
+</head>
+
+<body>
+  <div class="form-container">
+    <form id="voiceForm" onsubmit="submitForm(event)">
+      <div class="form-group inline-form">
+        <label for="fullName">Full Name:</label>
+        <input type="text" class="form-control" id="fullName" required>
+      </div>
+      <div class="form-group inline-form">
+        <label for="story">Record Your Story:</label>
+        <div class="audio-container">
+          <button id="recordButton" class="record-button" onclick="toggleRecording()">
+            <i class="fas fa-microphone"></i>Record
+          </button>
+          <audio id="recordedAudio" controls></audio>
+          <div class="delete-audio" onclick="deleteAudio()">
+            <i class="fas fa-trash"></i>
+          </div>
+        </div>
+      </div>
+      <div class="form-group inline-form">
+        <label for="dob">Date of Birth:</label>
+        <input type="date" class="form-control" id="dob" required>
+      </div>
+      <div class="form-group inline-form">
+        <label for="class">Class:</label>
+        <select class="form-control" id="class" required>
+          <option value="">Select Class</option>
+          <option value="1">Class 1</option>
+          <option value="2">Class 2</option>
+          <option value="3">Class 3</option>
+          <option value="4">Class 4</option>
+          <option value="5">Class 5</option>
+          <option value="6">Class 6</option>
+          <option value="7">Class 7</option>
+          <option value="8">Class 8</option>
+          <option value="9">Class 9</option>
+          <option value="10">Class 10</option>
+          <option value="11">Class 11</option>
+        </select>
+      </div>
+      <div class="form-group inline-form">
+        <label for="email">Email:</label>
+        <input type="email" class="form-control" id="email" required>
+        <div id="emailError" class="error-message"></div>
+      </div>
+      <div class="form-group inline-form">
+        <label for="phoneNumber">WhatsApp Number:</label>
+        <input type="tel" class="form-control" id="phoneNumber" required>
+        <div id="phoneError" class="error-message"></div>
+      </div>
+      <div class="form-group inline-form">
+        <label for="parentsName">Parents' Full Name (Mother/Father):</label>
+        <input type="text" class="form-control equal-width" id="parentsName" required>
+      </div>
+      <div class="form-group inline-form">
+        <label for="zipCode">ZIP Code (Pin Code):</label>
+        <input type="number" class="form-control" id="zipCode" required>
+        <div id="zipError" class="error-message"></div>
+      </div>
+      <div class="form-group text-center">
+        <button type="submit" class="btn-primary center-button">Submit</button>
+      </div>
+    </form>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    var isRecording = false;
+    var mediaRecorder;
+    var recordedChunks = [];
+
+    function toggleRecording() {
+      var recordButton = document.getElementById('recordButton');
+      var recordedAudio = document.getElementById('recordedAudio');
+      if (!isRecording) {
+        isRecording = true;
+        recordButton.classList.add('recording');
+        recordButton.innerHTML = '<i class="fas fa-stop"></i>Stop';
+        recordedAudio.src = ''; // Clear any previous recording
+        recordedChunks = [];
+
+        navigator.mediaDevices.getUserMedia({ audio: true })
+          .then(function (stream) {
+            mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.start();
+
+            mediaRecorder.addEventListener('dataavailable', function (event) {
+              recordedChunks.push(event.data);
+            });
+
+            mediaRecorder.addEventListener('stop', function () {
+              stream.getTracks().forEach(function (track) {
+                track.stop();
+              });
+
+              var blob = new Blob(recordedChunks);
+              recordedAudio.src = URL.createObjectURL(blob);
+            });
+          })
+          .catch(function (error) {
+            console.error('Error accessing microphone:', error);
+            isRecording = false;
+            recordButton.classList.remove('recording');
+            recordButton.innerHTML = '<i class="fas fa-microphone"></i>Record';
+          });
+      } else {
+        isRecording = false;
+        recordButton.classList.remove('recording');
+        recordButton.innerHTML = '<i class="fas fa-microphone"></i>Record';
+
+        mediaRecorder.stop();
+      }
+    }
+
+    function deleteAudio() {
+      var recordedAudio = document.getElementById('recordedAudio');
+      recordedAudio.src = '';
+      recordedChunks = [];
+    }
+
+    function submitForm(event) {
+      event.preventDefault();
+      var fullName = document.getElementById('fullName').value;
+      var recordedAudio = document.getElementById('recordedAudio').src;
+      var dob = document.getElementById('dob').value;
+      var selectedClass = document.getElementById('class').value;
+      var email = document.getElementById('email').value;
+      var phoneNumber = document.getElementById('phoneNumber').value;
+      var parentsName = document.getElementById('parentsName').value;
+      var zipCode = document.getElementById('zipCode').value;
+
+      // Perform form validation
+      var isValid = true;
+
+      // Email validation
+      var emailError = document.getElementById('emailError');
+      if (!validateEmail(email)) {
+        emailError.innerText = 'Please enter a valid email address.';
+        isValid = false;
+      } else {
+        emailError.innerText = '';
+      }
+
+      // Phone number validation
+      var phoneError = document.getElementById('phoneError');
+      if (!validatePhoneNumber(phoneNumber)) {
+        phoneError.innerText = 'Please enter a valid phone number.';
+        isValid = false;
+      } else {
+        phoneError.innerText = '';
+      }
+
+      // ZIP Code validation
+      var zipError = document.getElementById('zipError');
+      if (!validateZipCode(zipCode)) {
+        zipError.innerText = 'Please enter a valid ZIP Code.';
+        isValid = false;
+      } else {
+        zipError.innerText = '';
+      }
+
+      if (!recordedAudio) {
+        alert('Please record your voice before submitting the form.');
+        isValid = false;
+      }
+
+      if (!isValid) {
+        return;
+      }
+
+      // Submit the form data to the server using AJAX or any other method
+      // Replace the code below with your actual form submission logic
+
+      // Simulate form submission delay for demonstration
+      setTimeout(function () {
+        // Reset the form
+        document.getElementById('voiceForm').reset();
+        deleteAudio();
+        alert('Form submitted successfully!');
+      }, 2000);
+    }
+
+    function validateEmail(email) {
+      // Regular expression for email validation
+      var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailPattern.test(email);
+    }
+
+    function validatePhoneNumber(phoneNumber) {
+      // Regular expression for phone number validation
+      var phonePattern = /^\+?[0-9]{10,}$/;
+      return phonePattern.test(phoneNumber);
+    }
+
+    function validateZipCode(zipCode) {
+      // Regular expression for ZIP Code validation
+      var zipPattern = /^[0-9]{6}$/;
+      return zipPattern.test(zipCode);
+    }
+  </script>
+</body>
+</html>
